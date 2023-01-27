@@ -19,28 +19,43 @@ function cachingDecoratorNew(func) {
     return "Вычисляем: " + value;
 }
 }
-//Задача № 2
-function debounceDecoratorNew(func, delay) {
 
+
+//Задача № 2
+
+function debounceDecoratorNew(func, delay) {
   let timeoutId = null;
-  return function(...args){
-    if(timeoutId){
-      clearTimeout(timeoutId);
-    }
+  let firstCall = true;
+
+  function makeEmptyTimeout() {
     timeoutId = setTimeout(() => {
       timeoutId = null;
-      console.log(func(...args));
     }, delay);
-    return func(...args);
   }
-}
 
-function spy(func) {
   function wrapper(...args){
-    wrapper.count.push(args);
-    return func(...args);
+    wrapper.allCount++;
+    if (firstCall) {
+      firstCall = false;
+      // убеждаемся, что следующие вызовы в течении делэя будут отменены
+      makeEmptyTimeout();
+      wrapper.count = 1;
+      func(...args);
+    } else {
+      // если процесс уже был запущен, то отменяем
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      // планируем новый процесс
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+        wrapper.count++;
+        func(...args);
+      }, delay);
+    }
   }
-    wrapper.count = [];
+  wrapper.allCount = 0;
+  wrapper.count = 0;
 
-    return wrapper;
-}
+  return wrapper;
+};
